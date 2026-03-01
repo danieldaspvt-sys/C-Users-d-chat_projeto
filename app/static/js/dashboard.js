@@ -54,86 +54,111 @@ socket.on("private_message", (msg) => {
 });
 
 async function loadFriends() {
-    const res = await fetch("/api/friends");
-    const data = await res.json();
+    try {
+        const res = await fetch("/api/friends");
+        const data = await res.json();
 
-    friendsList.innerHTML = "";
-    if (data.friends.length === 0) {
-        friendsList.innerHTML = '<div class="empty-text">Sem amigos ainda. Adicione alguém pelo campo acima.</div>';
+        friendsList.innerHTML = "";
+        if (data.friends.length === 0) {
+            friendsList.innerHTML = '<div class="empty-text">Sem amigos ainda. Adicione alguém pelo campo acima.</div>';
+        }
+
+        data.friends.forEach((friend) => {
+            const item = document.createElement("div");
+            item.className = "friend-item";
+            item.innerHTML = `
+                <div class="user-meta" data-user="${friend.username}">
+                    <img class="avatar-sm" src="/static/${friend.profile_image}" alt="avatar">
+                    <span>@${friend.username}</span>
+                </div>
+                <span class="status-dot ${onlineFriends.has(friend.username) ? "online" : ""}"></span>
+            `;
+            item.querySelector(".user-meta").onclick = () => startChat(friend.username);
+            friendsList.appendChild(item);
+        });
+
+        pendingList.innerHTML = "";
+        if (data.pending.length === 0) {
+            pendingList.innerHTML = '<div class="empty-text">Sem solicitações pendentes.</div>';
+        }
+
+        data.pending.forEach((pending) => {
+            const row = document.createElement("div");
+            row.className = "pending-item";
+            row.innerHTML = `
+                <div class="user-meta">
+                    <img class="avatar-sm" src="/static/${pending.profile_image}" alt="avatar">
+                    <span>@${pending.username}</span>
+                </div>
+                <div>
+                    <button class="mini-btn accept" data-action="accept">✓</button>
+                    <button class="mini-btn reject" data-action="reject">✕</button>
+                </div>
+            `;
+            row.querySelector('[data-action="accept"]').onclick = () => respondRequest(pending.username, "accept");
+            row.querySelector('[data-action="reject"]').onclick = () => respondRequest(pending.username, "reject");
+            pendingList.appendChild(row);
+        });
+
+        outgoingList.innerHTML = "";
+        if ((data.outgoing || []).length === 0) {
+            outgoingList.innerHTML = '<div class="empty-text">Nenhuma solicitação enviada.</div>';
+        }
+
+        (data.outgoing || []).forEach((pending) => {
+            const row = document.createElement("div");
+            row.className = "pending-item";
+            row.innerHTML = `
+                <div class="user-meta">
+                    <img class="avatar-sm" src="/static/${pending.profile_image}" alt="avatar">
+                    <span>@${pending.username}</span>
+                </div>
+                <div class="empty-text">Aguardando</div>
+            `;
+            outgoingList.appendChild(row);
+        });
+    } catch {
+        showFeedback("Falha ao carregar amigos. Atualize a página.", true);
     }
-
-    data.friends.forEach((friend) => {
-        const item = document.createElement("div");
-        item.className = "friend-item";
-        item.innerHTML = `
-            <div class="user-meta" data-user="${friend.username}">
-                <img class="avatar-sm" src="/static/${friend.profile_image}" alt="avatar">
-                <span>@${friend.username}</span>
-            </div>
-            <span class="status-dot ${onlineFriends.has(friend.username) ? "online" : ""}"></span>
-        `;
-        item.querySelector(".user-meta").onclick = () => startChat(friend.username);
-        friendsList.appendChild(item);
-    });
-
-    pendingList.innerHTML = "";
-    if (data.pending.length === 0) {
-        pendingList.innerHTML = '<div class="empty-text">Sem solicitações pendentes.</div>';
-    }
-
-    data.pending.forEach((pending) => {
-        const row = document.createElement("div");
-        row.className = "pending-item";
-        row.innerHTML = `
-            <div class="user-meta">
-                <img class="avatar-sm" src="/static/${pending.profile_image}" alt="avatar">
-                <span>@${pending.username}</span>
-            </div>
-            <div>
-                <button class="mini-btn accept" data-action="accept">✓</button>
-                <button class="mini-btn reject" data-action="reject">✕</button>
-            </div>
-        `;
-        row.querySelector('[data-action="accept"]').onclick = () => respondRequest(pending.username, "accept");
-        row.querySelector('[data-action="reject"]').onclick = () => respondRequest(pending.username, "reject");
-        pendingList.appendChild(row);
-    });
-
-    outgoingList.innerHTML = "";
-    if ((data.outgoing || []).length === 0) {
-        outgoingList.innerHTML = '<div class="empty-text">Nenhuma solicitação enviada.</div>';
-    }
-
-    (data.outgoing || []).forEach((pending) => {
-        const row = document.createElement("div");
-        row.className = "pending-item";
-        row.innerHTML = `
-            <div class="user-meta">
-                <img class="avatar-sm" src="/static/${pending.profile_image}" alt="avatar">
-                <span>@${pending.username}</span>
-            </div>
-            <div class="empty-text">Aguardando</div>
-        `;
-        outgoingList.appendChild(row);
-    });
 }
 
 async function loadGroups() {
-    const res = await fetch("/api/groups");
-    const data = await res.json();
-    groupsList.innerHTML = "";
+    try {
+        const res = await fetch("/api/groups");
+        const data = await res.json();
+        groupsList.innerHTML = "";
 
-    if (!data.groups || data.groups.length === 0) {
-        groupsList.innerHTML = '<div class="empty-text">Nenhum grupo. O admin pode criar e te adicionar.</div>';
-        return;
+        if (!data.groups || data.groups.length === 0) {
+            groupsList.innerHTML = '<div class="empty-text">Nenhum grupo. O admin pode criar e te adicionar.</div>';
+            return;
+        }
+
+        data.groups.forEach((group) => {
+            const row = document.createElement("div");
+            row.className = "friend-item";
+            row.innerHTML = `
+                <div><strong>👥 ${group.name}</strong><br><small>${group.joined ? `${group.role}${group.muted ? ' - silenciado' : ''}` : 'não participante'}</small></div>
+                ${group.joined ? '<span class="empty-text">ok</span>' : '<button class="mini-btn accept">Entrar</button>'}
+            `;
+            if (!group.joined) {
+                row.querySelector("button").onclick = () => joinGroup(group.id);
+            }
+            groupsList.appendChild(row);
+        });
+    } catch {
+        groupsList.innerHTML = '<div class="empty-text">Erro ao carregar grupos.</div>';
     }
+}
 
-    data.groups.forEach((group) => {
-        const row = document.createElement("div");
-        row.className = "friend-item";
-        row.innerHTML = `<div><strong>👥 ${group.name}</strong><br><small>${group.role} ${group.muted ? '- silenciado' : ''}</small></div>`;
-        groupsList.appendChild(row);
+async function joinGroup(groupId) {
+    const res = await fetch("/api/groups/join", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ group_id: groupId }),
     });
+    const data = await res.json();
+    showFeedback(data.message, !res.ok);
+    loadGroups();
 }
 
 async function loadStatus() {
@@ -189,28 +214,104 @@ function sendMessage() {
     if (!currentChatUser) return showFeedback("Escolha um amigo na lista para iniciar o chat.", true);
     if (!text && !pendingAttachment) return;
 
-function showFeedback(message, isError = false) {
-    if (!feedbackText) return;
-    feedbackText.textContent = message;
-    feedbackText.classList.toggle("error", isError);
+    if (payload.message) {
+        const p = document.createElement("p");
+        p.textContent = payload.message;
+        node.appendChild(p);
+    }
+
+    if (payload.media) node.appendChild(renderMedia(payload.media));
+
+    const meta = document.createElement("small");
+    meta.className = "message-meta";
+    meta.textContent = sent ? "Você" : `@${payload.from}`;
+    node.appendChild(meta);
+
+    messagesContainer.appendChild(node);
 }
 
-function startChat(username) {
-    currentChatUser = username;
-    chatWith.innerText = `Conversando com @${username}`;
-    socket.emit("start_chat", { to: username });
+function renderMedia(media) {
+    if (media.type === "image") {
+        const i = document.createElement("img");
+        i.className = "media-item";
+        i.src = media.data;
+        return i;
+    }
+    if (media.type === "video") {
+        const v = document.createElement("video");
+        v.className = "media-item";
+        v.controls = true;
+        v.src = media.data;
+        return v;
+    }
+    if (media.type === "audio") {
+        const a = document.createElement("audio");
+        a.className = "media-item";
+        a.controls = true;
+        a.src = media.data;
+        return a;
+    }
+    if (media.type === "profile") {
+        const span = document.createElement("div");
+        span.innerText = `🔗 Perfil compartilhado: @${media.username}`;
+        return span;
+    }
+    const fallback = document.createElement("a");
+    fallback.href = media.data;
+    fallback.textContent = media.name || "Arquivo";
+    return fallback;
 }
 
-function sendMessage() {
-    const text = messageInput.value.trim();
-    if (!currentChatUser) return showFeedback("Escolha um amigo na lista para iniciar o chat.", true);
-    if (!text && !pendingAttachment) return;
+function prepareAttachment(file, type) {
+    if (!file) return;
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+        showFeedback("Arquivo maior que 5MB", true);
+        clearFileInputs();
+        return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+        pendingAttachment = { type, name: file.name, data: reader.result };
+        showFeedback(`Mídia pronta para envio: ${file.name}`);
+    };
+    reader.readAsDataURL(file);
+}
 
-    const payload = {
+function clearFileInputs() {
+    imageInput.value = "";
+    audioInput.value = "";
+    videoInput.value = "";
+}
+
+function scrollToBottom() {
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
+function triggerNotification() {
+    if ("vibrate" in navigator) navigator.vibrate([100, 60, 100]);
+}
+
+document.getElementById("sendBtn").addEventListener("click", sendMessage);
+messageInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") sendMessage();
+});
+
+document.getElementById("imageBtn").onclick = () => imageInput.click();
+document.getElementById("audioBtn").onclick = () => audioInput.click();
+document.getElementById("videoBtn").onclick = () => videoInput.click();
+
+imageInput.addEventListener("change", () => prepareAttachment(imageInput.files[0], "image"));
+audioInput.addEventListener("change", () => prepareAttachment(audioInput.files[0], "audio"));
+videoInput.addEventListener("change", () => prepareAttachment(videoInput.files[0], "video"));
+
+document.getElementById("shareProfileBtn").onclick = () => {
+    if (!currentChatUser) return showFeedback("Escolha um amigo para compartilhar perfil.", true);
+    socket.emit("private_message", {
         to: currentChatUser,
         message: text,
         media: pendingAttachment,
     });
+};
 
     messageInput.value = "";
     pendingAttachment = null;

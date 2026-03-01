@@ -42,6 +42,7 @@
                 <div>
                     <strong>@{{ session.username }}</strong>
                     <small id="chatWith">Selecione um amigo para conversar</small>
+                    <small id="statusText" class="status-text"></small>
                 </div>
             </div>
             <div class="actions">
@@ -51,21 +52,17 @@
             </div>
         </header>
 
-        <section class="tools-bar">
-            <button type="button" class="tool-btn" id="shareProfileBtn">Compartilhar perfil</button>
-            <button type="button" class="tool-btn" id="statusBtn">Atualizar status</button>
-            <button type="button" class="tool-btn" id="storyBtn">Publicar story</button>
-            <button type="button" class="tool-btn" id="videoCallBtn">Chamada de vídeo</button>
-            <span id="statusText" class="status-text"></span>
-        </section>
-
         <section class="messages" id="messages"></section>
 
         <footer class="composer">
             <div class="media-actions">
-                <button class="icon-btn" id="imageBtn" type="button">🖼️</button>
-                <button class="icon-btn" id="audioBtn" type="button">🎙️</button>
-                <button class="icon-btn" id="videoBtn" type="button">🎥</button>
+                <button class="icon-btn" id="imageBtn" type="button" title="Imagem">🖼️</button>
+                <button class="icon-btn" id="audioBtn" type="button" title="Áudio">🎙️</button>
+                <button class="icon-btn" id="videoBtn" type="button" title="Vídeo">🎥</button>
+                <button class="icon-btn" id="shareProfileBtn" type="button" title="Compartilhar perfil">👤</button>
+                <button class="icon-btn" id="statusBtn" type="button" title="Atualizar status">📝</button>
+                <button class="icon-btn" id="storyBtn" type="button" title="Publicar story">⭕</button>
+                <button class="icon-btn" id="videoCallBtn" type="button" title="Chamada de vídeo">📞</button>
             </div>
             <input type="file" id="imageInput" accept="image/*" hidden>
             <input type="file" id="audioInput" accept="audio/*" hidden>

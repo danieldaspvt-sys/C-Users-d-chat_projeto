@@ -81,8 +81,8 @@ def groups_api():
     user = User.query.filter_by(username=session["username"]).first_or_404()
 
     memberships = GroupMember.query.filter_by(user_id=user.id).all()
-    group_ids = [m.group_id for m in memberships]
-    groups = Group.query.filter(Group.id.in_(group_ids)).order_by(Group.name.asc()).all() if group_ids else []
+    joined_ids = {m.group_id for m in memberships}
+    groups = Group.query.order_by(Group.name.asc()).all()
 
     return jsonify(
         {
@@ -90,13 +90,34 @@ def groups_api():
                 {
                     "id": g.id,
                     "name": g.name,
-                    "role": next((m.role for m in memberships if m.group_id == g.id), "member"),
+                    "joined": g.id in joined_ids,
+                    "role": next((m.role for m in memberships if m.group_id == g.id), "-"),
                     "muted": next((m.muted for m in memberships if m.group_id == g.id), False),
                 }
                 for g in groups
             ]
         }
     )
+
+
+@chat.route("/api/groups/join", methods=["POST"])
+@login_required
+def join_group_api():
+    payload = request.get_json(silent=True) or {}
+    group_id = payload.get("group_id")
+
+    user = User.query.filter_by(username=session["username"]).first_or_404()
+    group = Group.query.get(group_id)
+    if not group:
+        return jsonify({"ok": False, "message": "Grupo não encontrado"}), 404
+
+    existing = GroupMember.query.filter_by(group_id=group.id, user_id=user.id).first()
+    if existing:
+        return jsonify({"ok": True, "message": "Você já está no grupo"})
+
+    db.session.add(GroupMember(group_id=group.id, user_id=user.id, role="member"))
+    db.session.commit()
+    return jsonify({"ok": True, "message": f"Você entrou no grupo {group.name}"})
 
 
 @chat.route("/api/status", methods=["GET", "POST"])
