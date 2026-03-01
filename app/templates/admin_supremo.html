@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ADM Supremo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+</head>
+<body>
+<main class="auth-card">
+    <div class="auth-brand">
+        <div class="logo">CP</div>
+        <strong>ADM Supremo</strong>
+    </div>
+
+    <h1>Acesso administrativo supremo</h1>
+    <p class="subtitle">Somente a conta suprema pode ativar ou acessar este painel.</p>
+    <p class="helper">Se você é o proprietário da plataforma, entre com a conta <strong>admin</strong> para usar esta função.</p>
+
+    <form method="POST" action="{{ url_for('admin.activate_supreme') }}">
+        <button type="submit">Ativar modo ADM Supremo (conta admin)</button>
+    </form>
+
+    <div class="actions">
+        <a href="{{ url_for('chat.dashboard') }}">Voltar ao chat</a>
+    </div>
+</main>
+</body>
+</html>

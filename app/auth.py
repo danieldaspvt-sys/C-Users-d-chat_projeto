@@ -1,63 +1,63 @@
-from flask import Blueprint, render_template, request, redirect, session
+from flask import Blueprint, render_template, request, redirect, session, url_for
+from sqlalchemy import func
 from werkzeug.security import generate_password_hash, check_password_hash
-from .models import db, User
+from .models import User, db
 
 auth = Blueprint("auth", __name__)
 
-# REGISTRO
+
+def normalize_username(raw):
+    return (raw or "").strip().replace("@", "").lower()
+
+
 @auth.route("/register", methods=["GET", "POST"])
 def register():
+    error = None
     if request.method == "POST":
-        username = request.form["username"]
+        username = normalize_username(request.form["username"])
         password = request.form["password"]
 
-        if User.query.filter_by(username=username).first():
-            return "Usuário já existe"
+        if not username:
+            error = "Informe um username"
+        elif User.query.filter(func.lower(User.username) == username).first():
+            error = "Usuário já existe"
+        elif len(password) < 6:
+            error = "A senha precisa ter pelo menos 6 caracteres"
+        else:
+            role = "admin" if User.query.count() == 0 else "user"
+            db.session.add(
+                User(username=username, password=generate_password_hash(password), role=role)
+            )
+            db.session.commit()
+            return redirect(url_for("auth.login"))
 
-        # Se for o primeiro usuário → vira admin
-        role = "admin" if User.query.count() == 0 else "user"
-
-        new_user = User(
-            username=username,
-            password=generate_password_hash(password),
-            role=role
-        )
-
-        db.session.add(new_user)
-        db.session.commit()
-
-        return redirect("/")
-
-    return render_template("register.html")
+    return render_template("register.html", error=error)
 
 
-# LOGIN
 @auth.route("/", methods=["GET", "POST"])
 def login():
+    error = None
     if request.method == "POST":
-        username = request.form["username"]
+        username = normalize_username(request.form["username"])
         password = request.form["password"]
 
-        user = User.query.filter_by(username=username).first()
-
+        user = User.query.filter(func.lower(User.username) == username).first()
         if not user:
-            return "Usuário não encontrado"
+            error = "Usuário não encontrado"
+        elif user.banned:
+            error = "Usuário banido"
+        elif not check_password_hash(user.password, password):
+            error = "Senha incorreta"
+        else:
+            session["username"] = user.username
+            session["role"] = user.role
+            session["profile_image"] = user.profile_image
+            return redirect(url_for("chat.dashboard"))
 
-        if user.banned:
-            return "Usuário banido"
-
-        if not check_password_hash(user.password, password):
-            return "Senha incorreta"
-
-        session["username"] = user.username
-        session["role"] = user.role
-
-        return redirect("/dashboard")
-
-    return render_template("login.html")
+    return render_template("login.html", error=error)
 
 
 @auth.route("/logout")
 def logout():
     session.clear()
-    return redirect("/")
+    return redirect(url_for("auth.login"))
