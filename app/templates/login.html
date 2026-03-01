@@ -1,18 +1,44 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
 <head>
-    <title>Login</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | Chat Premium</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
 </head>
 <body>
-    <h2>Login</h2>
-    <form method="POST">
-        <input name="username" placeholder="@usuario" required>
-        <br><br>
-        <input type="password" name="password" placeholder="Senha" required>
-        <br><br>
-        <button type="submit">Entrar</button>
-    </form>
-    <br>
-    <a href="/register">Criar conta</a>
+    <main class="auth-card">
+        <div class="auth-brand">
+            <div class="logo">CP</div>
+            <strong>Chat Premium</strong>
+        </div>
+
+        <h1>Entrar</h1>
+        <p class="subtitle">Converse em privado com mídia, interface moderna e experiência mobile.</p>
+
+        <form method="POST" novalidate>
+            <div class="field">
+                <label for="username">Usuário</label>
+                <input id="username" name="username" placeholder="@usuario" required>
+            </div>
+
+            <div class="field">
+                <label for="password">Senha</label>
+                <input id="password" type="password" name="password" placeholder="Sua senha" required>
+            </div>
+
+            <button type="submit">Entrar na conta</button>
+        </form>
+
+        {% if error %}
+            <p class="error">{{ error }}</p>
+        {% endif %}
+
+        <div class="actions">
+            Não tem conta? <a href="{{ url_for('auth.register') }}">Criar conta</a>
+        </div>
+
+        <p class="helper">Dica: use um @nome curto para facilitar iniciar chats privados.</p>
+    </main>
 </body>
 </html>
