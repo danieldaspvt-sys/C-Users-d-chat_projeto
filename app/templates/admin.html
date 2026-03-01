@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Admin</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+</head>
+<body>
+<main class="auth-card" style="width:min(100%,900px)">
+    <h1>Painel Administrativo</h1>
+    <p class="subtitle">Permissões totais: banir, criar login, trocar senha, criar grupo e ver conversas.</p>
+
+    <h3>Criar login</h3>
+    <form method="POST" action="{{ url_for('admin.create_user') }}" style="display:grid;grid-template-columns:1fr 1fr 140px auto;gap:8px;">
+        <input name="username" placeholder="username" required>
+        <input name="password" placeholder="senha (min 6)" required>
+        <select name="role"><option value="user">user</option><option value="admin">admin</option></select>
+        <button type="submit">Criar</button>
+    </form>
+
+    <h3>Usuários</h3>
+    {% for u in users %}
+    <div style="display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;margin-bottom:8px;border:1px solid #243256;padding:8px;border-radius:10px;">
+        <div>@{{ u.username }} | role: {{ u.role }} | banido: {{ 'sim' if u.banned else 'não' }}</div>
+        <form method="POST" action="{{ url_for('admin.ban_user', user_id=u.id) }}"><button type="submit">{{ 'Desbanir' if u.banned else 'Banir' }}</button></form>
+        <form method="POST" action="{{ url_for('admin.change_password', user_id=u.id) }}" style="display:flex;gap:6px;">
+            <input name="password" placeholder="nova senha" required>
+            <button type="submit">Trocar senha</button>
+        </form>
+    </div>
+    {% endfor %}
+
+    <h3>Criar grupo</h3>
+    <form method="POST" action="{{ url_for('admin.create_group') }}" style="display:flex;gap:8px;">
+        <input name="name" placeholder="Nome do grupo" required>
+        <button type="submit">Criar grupo</button>
+    </form>
+
+    <h3>Grupos</h3>
+    {% for g in groups %}<p>- {{ g.name }}</p>{% else %}<p>Nenhum grupo ainda.</p>{% endfor %}
+
+    <h3>Conversas recentes</h3>
+    <div style="max-height:300px;overflow:auto;border:1px solid #243256;padding:10px;border-radius:10px;">
+    {% for m in messages %}
+        <p>[{{ m.timestamp.strftime('%d/%m %H:%M') }}] {{ m.sender_id }} -> {{ m.receiver_id }}: {{ m.content }}</p>
+    {% else %}
+        <p>Sem mensagens.</p>
+    {% endfor %}
+    </div>
+
+    <div class="actions"><a href="{{ url_for('chat.dashboard') }}">Voltar</a></div>
+</main>
+</body>
+</html>

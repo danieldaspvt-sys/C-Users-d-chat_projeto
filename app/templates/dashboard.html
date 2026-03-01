@@ -7,39 +7,55 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
 </head>
 <body>
-
-<div class="app">
+<div class="layout">
     <aside class="sidebar">
-        <div class="logo">Chat Premium</div>
-        <div class="user-info">@{{ session.username }}</div>
-        <div class="users-list" id="usersList"></div>
-        <a href="{{ url_for('auth.logout') }}" class="logout">Sair</a>
-    </aside>
+        <div class="brand">Chat Premium</div>
 
-    <main class="chat-area">
-        <div class="chat-header">
-            <span id="chatWith">Selecione um usuário</span>
-            <span class="status" id="chatStatus">Privado e seguro</span>
+        <div class="search-box">
+            <input id="friendSearch" placeholder="Buscar @username para adicionar">
+            <button id="sendRequestBtn" type="button">Adicionar</button>
         </div>
 
-        <div class="messages" id="messages"></div>
+        <div class="section-title">Solicitações pendentes</div>
+        <div id="pendingList" class="pending-list"></div>
 
-        <div class="chat-input">
-            <div class="media-actions">
-                <button class="icon-btn" type="button" id="imageBtn" title="Enviar imagem">🖼️</button>
-                <button class="icon-btn" type="button" id="audioBtn" title="Enviar áudio">🎙️</button>
-                <button class="icon-btn" type="button" id="videoBtn" title="Enviar vídeo">🎥</button>
+        <div class="section-title">Meus amigos</div>
+        <div id="friendsList" class="friends-list"></div>
+    </aside>
+
+    <main class="chat">
+        <header class="topbar">
+            <div class="me">
+                <img class="avatar" src="{{ url_for('static', filename=session.get('profile_image', 'uploads/default-avatar.svg')) }}" alt="avatar">
+                <div>
+                    <strong>@{{ session.username }}</strong>
+                    <small id="chatWith">Selecione um amigo para conversar</small>
+                </div>
             </div>
+            <div class="actions">
+                <a class="btn" href="{{ url_for('profile.profile_page') }}">Perfil</a>
+                {% if session.get('role') == 'admin' %}
+                <a class="btn" href="{{ url_for('admin.panel') }}">Admin</a>
+                {% endif %}
+                <a class="btn danger" href="{{ url_for('auth.logout') }}">Sair</a>
+            </div>
+        </header>
 
+        <section class="messages" id="messages"></section>
+
+        <footer class="composer">
+            <div class="media-actions">
+                <button class="icon-btn" id="imageBtn" type="button">🖼️</button>
+                <button class="icon-btn" id="audioBtn" type="button">🎙️</button>
+                <button class="icon-btn" id="videoBtn" type="button">🎥</button>
+            </div>
             <input type="file" id="imageInput" accept="image/*" hidden>
             <input type="file" id="audioInput" accept="audio/*" hidden>
             <input type="file" id="videoInput" accept="video/*" hidden>
 
-            <div class="input-wrap">
-                <input type="text" id="messageInput" placeholder="Digite sua mensagem...">
-                <button id="sendBtn" onclick="sendMessage()">Enviar</button>
-            </div>
-        </div>
+            <input id="messageInput" placeholder="Digite uma mensagem">
+            <button id="sendBtn" type="button">Enviar</button>
+        </footer>
     </main>
 </div>
 
@@ -48,6 +64,5 @@
 </script>
 <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
 <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
-
 </body>
 </html>

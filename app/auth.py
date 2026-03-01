@@ -1,6 +1,6 @@
-from flask import Blueprint, render_template, request, redirect, session
+from flask import Blueprint, render_template, request, redirect, session, url_for
 from werkzeug.security import generate_password_hash, check_password_hash
-from .models import db, User
+from .models import User, db
 
 auth = Blueprint("auth", __name__)
 
@@ -8,28 +8,23 @@ auth = Blueprint("auth", __name__)
 @auth.route("/register", methods=["GET", "POST"])
 def register():
     error = None
-
     if request.method == "POST":
-        username = request.form["username"].strip()
+        username = request.form["username"].strip().replace("@", "")
         password = request.form["password"]
 
-        if User.query.filter_by(username=username).first():
+        if not username:
+            error = "Informe um username"
+        elif User.query.filter_by(username=username).first():
             error = "Usuário já existe"
         elif len(password) < 6:
             error = "A senha precisa ter pelo menos 6 caracteres"
         else:
             role = "admin" if User.query.count() == 0 else "user"
-
-            new_user = User(
-                username=username,
-                password=generate_password_hash(password),
-                role=role
+            db.session.add(
+                User(username=username, password=generate_password_hash(password), role=role)
             )
-
-            db.session.add(new_user)
             db.session.commit()
-
-            return redirect("/")
+            return redirect(url_for("auth.login"))
 
     return render_template("register.html", error=error)
 
@@ -37,13 +32,11 @@ def register():
 @auth.route("/", methods=["GET", "POST"])
 def login():
     error = None
-
     if request.method == "POST":
-        username = request.form["username"].strip()
+        username = request.form["username"].strip().replace("@", "")
         password = request.form["password"]
 
         user = User.query.filter_by(username=username).first()
-
         if not user:
             error = "Usuário não encontrado"
         elif user.banned:
@@ -53,7 +46,8 @@ def login():
         else:
             session["username"] = user.username
             session["role"] = user.role
-            return redirect("/dashboard")
+            session["profile_image"] = user.profile_image
+            return redirect(url_for("chat.dashboard"))
 
     return render_template("login.html", error=error)
 
@@ -61,4 +55,4 @@ def login():
 @auth.route("/logout")
 def logout():
     session.clear()
-    return redirect("/")
+    return redirect(url_for("auth.login"))
