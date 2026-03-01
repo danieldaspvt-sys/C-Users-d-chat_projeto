@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meu Perfil</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+</head>
+<body>
+<main class="auth-card">
+    <div class="auth-brand">
+        <div class="logo">CP</div>
+        <strong>Meu Perfil</strong>
+    </div>
+
+    <div style="text-align:center; margin: 10px 0 16px;">
+        <img src="{{ url_for('static', filename=user.profile_image) }}" alt="avatar" style="width:90px;height:90px;border-radius:50%;object-fit:cover;border:1px solid #243256;">
+    </div>
+
+    <p><strong>Username:</strong> @{{ user.username }}</p>
+    <p><strong>Criado em:</strong> {{ user.created_at.strftime('%d/%m/%Y %H:%M') if user.created_at else '-' }}</p>
+    <p><strong>Amigos:</strong> {{ friends_count }}</p>
+
+    <form method="POST" enctype="multipart/form-data">
+        <div class="field">
+            <label for="profile_image">Alterar foto de perfil</label>
+            <input id="profile_image" type="file" name="profile_image" accept="image/*" required>
+        </div>
+        <button type="submit">Salvar nova foto</button>
+    </form>
+
+    {% if error %}<p class="error">{{ error }}</p>{% endif %}
+
+    <div class="actions" style="display:flex;justify-content:center;gap:10px;flex-wrap:wrap;">
+        <a href="{{ url_for('chat.dashboard') }}">Voltar ao chat</a>
+        <a href="{{ url_for('admin.supreme_panel') }}">Painel ADM Supremo</a>
+    </div>
+</main>
+</body>
+</html>
