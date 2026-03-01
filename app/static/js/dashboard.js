@@ -130,7 +130,7 @@ function sendMessage() {
     if (!currentChatUser) return alert("Escolha um amigo primeiro.");
     if (!text && !pendingAttachment) return;
 
-    socket.emit("private_message", {
+    const payload = {
         to: currentChatUser,
         message: text,
         media: pendingAttachment,
