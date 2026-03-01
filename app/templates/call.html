@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chamada de vídeo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+</head>
+<body>
+<main class="auth-card">
+    <h1>Chamada de vídeo</h1>
+    <p class="subtitle">Sala: {{ room }}</p>
+    <p class="helper">MVP pronto: link compartilhável criado. Próximo passo profissional é integrar WebRTC (Agora/LiveKit/Twilio) para vídeo em tempo real.</p>
+    <div class="actions"><a href="{{ url_for('chat.dashboard') }}">Voltar ao chat</a></div>
+</main>
+</body>
+</html>

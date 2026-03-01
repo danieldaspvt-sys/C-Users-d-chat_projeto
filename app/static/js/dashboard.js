@@ -9,9 +9,11 @@ const messagesContainer = document.getElementById("messages");
 const messageInput = document.getElementById("messageInput");
 const chatWith = document.getElementById("chatWith");
 const friendsList = document.getElementById("friendsList");
+const groupsList = document.getElementById("groupsList");
 const pendingList = document.getElementById("pendingList");
 const outgoingList = document.getElementById("outgoingList");
 const feedbackText = document.getElementById("feedbackText");
+const statusText = document.getElementById("statusText");
 
 const imageInput = document.getElementById("imageInput");
 const audioInput = document.getElementById("audioInput");
@@ -23,13 +25,6 @@ friendSearchForm.addEventListener("submit", (event) => {
     sendFriendRequest();
 });
 
-document.getElementById("friendSearch").addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-        e.preventDefault();
-        sendFriendRequest();
-    }
-});
-
 socket.on("friends_online", (users) => {
     onlineFriends.clear();
     users.forEach((u) => onlineFriends.add(u));
@@ -37,11 +32,8 @@ socket.on("friends_online", (users) => {
 });
 
 socket.on("friend_presence", (payload) => {
-    if (payload.online) {
-        onlineFriends.add(payload.username);
-    } else {
-        onlineFriends.delete(payload.username);
-    }
+    if (payload.online) onlineFriends.add(payload.username);
+    else onlineFriends.delete(payload.username);
     loadFriends();
 });
 
@@ -80,7 +72,6 @@ async function loadFriends() {
             </div>
             <span class="status-dot ${onlineFriends.has(friend.username) ? "online" : ""}"></span>
         `;
-
         item.querySelector(".user-meta").onclick = () => startChat(friend.username);
         friendsList.appendChild(item);
     });
@@ -103,7 +94,6 @@ async function loadFriends() {
                 <button class="mini-btn reject" data-action="reject">✕</button>
             </div>
         `;
-
         row.querySelector('[data-action="accept"]').onclick = () => respondRequest(pending.username, "accept");
         row.querySelector('[data-action="reject"]').onclick = () => respondRequest(pending.username, "reject");
         pendingList.appendChild(row);
@@ -126,6 +116,30 @@ async function loadFriends() {
         `;
         outgoingList.appendChild(row);
     });
+}
+
+async function loadGroups() {
+    const res = await fetch("/api/groups");
+    const data = await res.json();
+    groupsList.innerHTML = "";
+
+    if (!data.groups || data.groups.length === 0) {
+        groupsList.innerHTML = '<div class="empty-text">Nenhum grupo. O admin pode criar e te adicionar.</div>';
+        return;
+    }
+
+    data.groups.forEach((group) => {
+        const row = document.createElement("div");
+        row.className = "friend-item";
+        row.innerHTML = `<div><strong>👥 ${group.name}</strong><br><small>${group.role} ${group.muted ? '- silenciado' : ''}</small></div>`;
+        groupsList.appendChild(row);
+    });
+}
+
+async function loadStatus() {
+    const res = await fetch("/api/status");
+    const data = await res.json();
+    statusText.textContent = `Status: ${data.status || "Sem status"}`;
 }
 
 async function sendFriendRequest() {
@@ -158,6 +172,22 @@ async function respondRequest(username, action) {
     showFeedback(data.message, !res.ok);
     loadFriends();
 }
+
+function showFeedback(message, isError = false) {
+    feedbackText.textContent = message;
+    feedbackText.classList.toggle("error", isError);
+}
+
+function startChat(username) {
+    currentChatUser = username;
+    chatWith.innerText = `Conversando com @${username}`;
+    socket.emit("start_chat", { to: username });
+}
+
+function sendMessage() {
+    const text = messageInput.value.trim();
+    if (!currentChatUser) return showFeedback("Escolha um amigo na lista para iniciar o chat.", true);
+    if (!text && !pendingAttachment) return;
 
 function showFeedback(message, isError = false) {
     if (!feedbackText) return;
@@ -228,24 +258,16 @@ function renderMedia(media) {
         a.src = media.data;
         return a;
     }
+    if (media.type === "profile") {
+        const span = document.createElement("div");
+        span.innerText = `🔗 Perfil compartilhado: @${media.username}`;
+        return span;
+    }
     const fallback = document.createElement("a");
     fallback.href = media.data;
     fallback.textContent = media.name || "Arquivo";
     return fallback;
 }
-
-document.getElementById("sendBtn").addEventListener("click", sendMessage);
-messageInput.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") sendMessage();
-});
-
-document.getElementById("imageBtn").onclick = () => imageInput.click();
-document.getElementById("audioBtn").onclick = () => audioInput.click();
-document.getElementById("videoBtn").onclick = () => videoInput.click();
-
-imageInput.addEventListener("change", () => prepareAttachment(imageInput.files[0], "image"));
-audioInput.addEventListener("change", () => prepareAttachment(audioInput.files[0], "audio"));
-videoInput.addEventListener("change", () => prepareAttachment(videoInput.files[0], "video"));
 
 function prepareAttachment(file, type) {
     if (!file) return;
@@ -274,17 +296,63 @@ function scrollToBottom() {
 
 function triggerNotification() {
     if ("vibrate" in navigator) navigator.vibrate([100, 60, 100]);
-    const context = new (window.AudioContext || window.webkitAudioContext)();
-    const osc = context.createOscillator();
-    const gain = context.createGain();
-    osc.frequency.value = 880;
-    osc.connect(gain);
-    gain.connect(context.destination);
-    gain.gain.setValueAtTime(0.0001, context.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.12, context.currentTime + 0.02);
-    gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 0.25);
-    osc.start();
-    osc.stop(context.currentTime + 0.25);
 }
 
+document.getElementById("sendBtn").addEventListener("click", sendMessage);
+messageInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") sendMessage();
+});
+
+document.getElementById("imageBtn").onclick = () => imageInput.click();
+document.getElementById("audioBtn").onclick = () => audioInput.click();
+document.getElementById("videoBtn").onclick = () => videoInput.click();
+
+imageInput.addEventListener("change", () => prepareAttachment(imageInput.files[0], "image"));
+audioInput.addEventListener("change", () => prepareAttachment(audioInput.files[0], "audio"));
+videoInput.addEventListener("change", () => prepareAttachment(videoInput.files[0], "video"));
+
+document.getElementById("shareProfileBtn").onclick = () => {
+    if (!currentChatUser) return showFeedback("Escolha um amigo para compartilhar perfil.", true);
+    socket.emit("private_message", {
+        to: currentChatUser,
+        message: "",
+        media: { type: "profile", username: window.currentUser },
+    });
+};
+
+document.getElementById("statusBtn").onclick = async () => {
+    const text = prompt("Digite seu novo status:");
+    if (!text) return;
+    const res = await fetch("/api/status", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+    });
+    const data = await res.json();
+    showFeedback(data.message, !res.ok);
+    loadStatus();
+};
+
+document.getElementById("storyBtn").onclick = async () => {
+    const content = prompt("Digite seu story:");
+    if (!content) return;
+    const res = await fetch("/api/stories", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content }),
+    });
+    const data = await res.json();
+    showFeedback(data.message, !res.ok);
+};
+
+document.getElementById("videoCallBtn").onclick = () => {
+    if (!currentChatUser) return showFeedback("Escolha um amigo para iniciar chamada.", true);
+    const room = [window.currentUser, currentChatUser].sort().join("-");
+    const callUrl = `${window.location.origin}/call/${room}`;
+    navigator.clipboard?.writeText(callUrl);
+    showFeedback("Link de chamada gerado e copiado. Envie ao contato.");
+};
+
 loadFriends();
+loadGroups();
+loadStatus();

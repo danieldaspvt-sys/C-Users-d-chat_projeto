@@ -30,6 +30,9 @@
 
         <div class="section-title">Meus amigos</div>
         <div id="friendsList" class="friends-list"></div>
+
+        <div class="section-title">Meus grupos</div>
+        <div id="groupsList" class="friends-list"></div>
     </aside>
 
     <main class="chat">
@@ -47,6 +50,14 @@
                 <a class="btn danger" href="{{ url_for('auth.logout') }}">Sair</a>
             </div>
         </header>
+
+        <section class="tools-bar">
+            <button type="button" class="tool-btn" id="shareProfileBtn">Compartilhar perfil</button>
+            <button type="button" class="tool-btn" id="statusBtn">Atualizar status</button>
+            <button type="button" class="tool-btn" id="storyBtn">Publicar story</button>
+            <button type="button" class="tool-btn" id="videoCallBtn">Chamada de vídeo</button>
+            <span id="statusText" class="status-text"></span>
+        </section>
 
         <section class="messages" id="messages"></section>
 

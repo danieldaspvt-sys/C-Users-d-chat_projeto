@@ -7,9 +7,9 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
 </head>
 <body>
-<main class="auth-card" style="width:min(100%,900px)">
-    <h1>Painel Administrativo</h1>
-    <p class="subtitle">Permissões totais: banir, criar login, trocar senha, criar grupo e ver conversas.</p>
+<main class="auth-card" style="width:min(100%,1100px)">
+    <h1>Painel Administrativo Supremo</h1>
+    <p class="subtitle">Gestão de usuários, grupos, permissões e moderação.</p>
 
     <h3>Criar login</h3>
     <form method="POST" action="{{ url_for('admin.create_user') }}" style="display:grid;grid-template-columns:1fr 1fr 140px auto;gap:8px;">
@@ -22,7 +22,10 @@
     <h3>Usuários</h3>
     {% for u in users %}
     <div style="display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;margin-bottom:8px;border:1px solid #243256;padding:8px;border-radius:10px;">
-        <div>@{{ u.username }} | role: {{ u.role }} | banido: {{ 'sim' if u.banned else 'não' }}</div>
+        <div>
+            <strong>@{{ u.username }}</strong> | role: {{ u.role }} | banido: {{ 'sim' if u.banned else 'não' }}<br>
+            <small>Hash da senha: {{ u.password[:22] }}...</small>
+        </div>
         <form method="POST" action="{{ url_for('admin.ban_user', user_id=u.id) }}"><button type="submit">{{ 'Desbanir' if u.banned else 'Banir' }}</button></form>
         <form method="POST" action="{{ url_for('admin.change_password', user_id=u.id) }}" style="display:flex;gap:6px;">
             <input name="password" placeholder="nova senha" required>
@@ -37,8 +40,36 @@
         <button type="submit">Criar grupo</button>
     </form>
 
-    <h3>Grupos</h3>
-    {% for g in groups %}<p>- {{ g.name }}</p>{% else %}<p>Nenhum grupo ainda.</p>{% endfor %}
+    <h3>Grupos e membros</h3>
+    {% for g in groups %}
+    <div style="margin-bottom:14px;border:1px solid #243256;padding:10px;border-radius:10px;">
+        <strong>{{ g.name }}</strong>
+        <form method="POST" action="{{ url_for('admin.add_group_member', group_id=g.id) }}" style="display:flex;gap:6px;margin-top:8px;">
+            <input name="username" placeholder="@usuario para adicionar" required>
+            <select name="role"><option value="member">membro</option><option value="admin">admin do grupo</option></select>
+            <button type="submit">Adicionar no grupo</button>
+        </form>
+
+        <div style="margin-top:8px;">
+            {% for m in members_by_group.get(g.id, []) %}
+                {% set u = users_map.get(m.user_id) %}
+                <div style="display:grid;grid-template-columns:1fr auto auto;gap:6px;align-items:center;margin-top:6px;">
+                    <div>@{{ u.username if u else m.user_id }} | role grupo: {{ m.role }} | silenciado: {{ 'sim' if m.muted else 'não' }}</div>
+                    <form method="POST" action="{{ url_for('admin.toggle_group_admin', group_id=g.id, user_id=m.user_id) }}">
+                        <button type="submit">Tornar/remover admin</button>
+                    </form>
+                    <form method="POST" action="{{ url_for('admin.toggle_group_mute', group_id=g.id, user_id=m.user_id) }}">
+                        <button type="submit">Silenciar/ativar</button>
+                    </form>
+                </div>
+            {% else %}
+                <p>Sem membros ainda.</p>
+            {% endfor %}
+        </div>
+    </div>
+    {% else %}
+        <p>Nenhum grupo criado.</p>
+    {% endfor %}
 
     <h3>Conversas recentes</h3>
     <div style="max-height:300px;overflow:auto;border:1px solid #243256;padding:10px;border-radius:10px;">

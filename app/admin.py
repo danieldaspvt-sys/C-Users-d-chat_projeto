@@ -1,6 +1,6 @@
 from flask import Blueprint, redirect, render_template, request, session, url_for
 from werkzeug.security import generate_password_hash
-from .models import Group, Message, User, db
+from .models import Group, GroupMember, Message, User, db
 from .security import admin_required, login_required
 
 admin = Blueprint("admin", __name__, url_prefix="/admin")
@@ -10,9 +10,24 @@ admin = Blueprint("admin", __name__, url_prefix="/admin")
 @admin_required
 def panel():
     users = User.query.order_by(User.created_at.desc()).all()
-    messages = Message.query.order_by(Message.timestamp.desc()).limit(200).all()
     groups = Group.query.order_by(Group.created_at.desc()).all()
-    return render_template("admin.html", users=users, messages=messages, groups=groups)
+    members = GroupMember.query.all()
+    messages = Message.query.order_by(Message.timestamp.desc()).limit(200).all()
+
+    members_by_group = {}
+    for m in members:
+        members_by_group.setdefault(m.group_id, []).append(m)
+
+    users_map = {u.id: u for u in users}
+
+    return render_template(
+        "admin.html",
+        users=users,
+        messages=messages,
+        groups=groups,
+        members_by_group=members_by_group,
+        users_map=users_map,
+    )
 
 
 @admin.route("/supremo")
@@ -81,6 +96,46 @@ def create_group():
     name = request.form.get("name", "").strip()
     creator = User.query.filter_by(username=session.get("username")).first()
     if name and not Group.query.filter_by(name=name).first() and creator:
-        db.session.add(Group(name=name, created_by=creator.id))
+        group = Group(name=name, created_by=creator.id)
+        db.session.add(group)
         db.session.commit()
+        db.session.add(GroupMember(group_id=group.id, user_id=creator.id, role="owner"))
+        db.session.commit()
+    return redirect(url_for("admin.panel"))
+
+
+@admin.route("/group/<int:group_id>/member/add", methods=["POST"])
+@admin_required
+def add_group_member(group_id):
+    username = request.form.get("username", "").strip().replace("@", "")
+    role = request.form.get("role", "member")
+    user = User.query.filter_by(username=username).first()
+    if user and not GroupMember.query.filter_by(group_id=group_id, user_id=user.id).first():
+        db.session.add(
+            GroupMember(
+                group_id=group_id,
+                user_id=user.id,
+                role="admin" if role == "admin" else "member",
+            )
+        )
+        db.session.commit()
+    return redirect(url_for("admin.panel"))
+
+
+@admin.route("/group/<int:group_id>/member/<int:user_id>/toggle-admin", methods=["POST"])
+@admin_required
+def toggle_group_admin(group_id, user_id):
+    member = GroupMember.query.filter_by(group_id=group_id, user_id=user_id).first_or_404()
+    if member.role != "owner":
+        member.role = "admin" if member.role == "member" else "member"
+        db.session.commit()
+    return redirect(url_for("admin.panel"))
+
+
+@admin.route("/group/<int:group_id>/member/<int:user_id>/toggle-mute", methods=["POST"])
+@admin_required
+def toggle_group_mute(group_id, user_id):
+    member = GroupMember.query.filter_by(group_id=group_id, user_id=user_id).first_or_404()
+    member.muted = not member.muted
+    db.session.commit()
     return redirect(url_for("admin.panel"))
