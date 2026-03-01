@@ -176,7 +176,7 @@ function sendMessage() {
     if (!currentChatUser) return showFeedback("Escolha um amigo na lista para iniciar o chat.", true);
     if (!text && !pendingAttachment) return;
 
-    socket.emit("private_message", {
+    const payload = {
         to: currentChatUser,
         message: text,
         media: pendingAttachment,
