@@ -1,18 +1,44 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
 <head>
-    <title>Registro</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro | Chat Premium</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
 </head>
 <body>
-    <h2>Criar Conta</h2>
-    <form method="POST">
-        <input name="username" placeholder="@usuario" required>
-        <br><br>
-        <input type="password" name="password" placeholder="Senha" required>
-        <br><br>
-        <button type="submit">Registrar</button>
-    </form>
-    <br>
-    <a href="/">Já tenho conta</a>
+    <main class="auth-card">
+        <div class="auth-brand">
+            <div class="logo">CP</div>
+            <strong>Chat Premium</strong>
+        </div>
+
+        <h1>Criar conta</h1>
+        <p class="subtitle">Configure seu usuário e comece a conversar com mensagens privadas e mídias.</p>
+
+        <form method="POST" novalidate>
+            <div class="field">
+                <label for="username">Usuário</label>
+                <input id="username" name="username" placeholder="@usuario" required>
+            </div>
+
+            <div class="field">
+                <label for="password">Senha</label>
+                <input id="password" type="password" name="password" placeholder="Mínimo 6 caracteres" minlength="6" required>
+            </div>
+
+            <button type="submit">Registrar</button>
+        </form>
+
+        {% if error %}
+            <p class="error">{{ error }}</p>
+        {% endif %}
+
+        <div class="actions">
+            Já tem conta? <a href="{{ url_for('auth.login') }}">Fazer login</a>
+        </div>
+
+        <p class="helper">O primeiro usuário criado recebe permissão de administrador.</p>
+    </main>
 </body>
 </html>
