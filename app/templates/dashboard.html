@@ -11,10 +11,16 @@
     <aside class="sidebar">
         <div class="brand">Chat Premium</div>
 
-        <div class="search-box">
-            <input id="friendSearch" placeholder="Buscar @username para adicionar">
-            <button id="sendRequestBtn" type="button">Adicionar</button>
+        <div class="helper-box">
+            Para conversar, adicione um amigo por <strong>@username</strong> e aguarde aceitar.
         </div>
+
+        <form id="friendSearchForm" class="search-box" autocomplete="off">
+            <input id="friendSearch" placeholder="Buscar @username para adicionar">
+            <button id="sendRequestBtn" type="submit">Adicionar</button>
+        </form>
+
+        <div id="feedbackText" class="feedback-text"></div>
 
         <div class="section-title">Solicitações pendentes</div>
         <div id="pendingList" class="pending-list"></div>
@@ -34,9 +40,7 @@
             </div>
             <div class="actions">
                 <a class="btn" href="{{ url_for('profile.profile_page') }}">Perfil</a>
-                {% if session.get('role') == 'admin' %}
-                <a class="btn" href="{{ url_for('admin.panel') }}">Admin</a>
-                {% endif %}
+                <a class="btn {% if session.get('role') != 'admin' %}disabled{% endif %}" href="{{ url_for('admin.supreme_panel') }}" title="{% if session.get('role') == 'admin' %}Painel Supremo{% else %}Somente para admin{% endif %}">ADM Supremo</a>
                 <a class="btn danger" href="{{ url_for('auth.logout') }}">Sair</a>
             </div>
         </header>

@@ -31,7 +31,10 @@
 
     {% if error %}<p class="error">{{ error }}</p>{% endif %}
 
-    <div class="actions"><a href="{{ url_for('chat.dashboard') }}">Voltar ao chat</a></div>
+    <div class="actions" style="display:flex;justify-content:center;gap:10px;flex-wrap:wrap;">
+        <a href="{{ url_for('chat.dashboard') }}">Voltar ao chat</a>
+        <a href="{{ url_for('admin.supreme_panel') }}">Painel ADM Supremo</a>
+    </div>
 </main>
 </body>
 </html>

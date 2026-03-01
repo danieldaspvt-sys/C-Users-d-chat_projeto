@@ -29,11 +29,16 @@ body {
 }
 .brand { font-size: 1.2rem; font-weight: 700; }
 .section-title { font-size: .82rem; color: var(--muted); text-transform: uppercase; }
+.helper-box { font-size: .85rem; color: #ccdcff; border: 1px solid var(--line); background: #101936; border-radius: 10px; padding: 9px; }
+.feedback-text { min-height: 20px; font-size: .84rem; color: #93c5fd; }
+.feedback-text.error { color: #fecaca; }
+.empty-text { font-size: .83rem; color: var(--muted); }
+
 .search-box { display: flex; gap: 8px; }
 .search-box input {
     flex: 1; background: #0f1833; border: 1px solid var(--line); border-radius: 10px; color: var(--text); padding: 10px;
 }
-.search-box button { border: 0; border-radius: 10px; padding: 0 12px; background: linear-gradient(135deg, var(--accent), var(--accent-2)); font-weight: 700; }
+.search-box button { border: 0; border-radius: 10px; padding: 0 12px; background: linear-gradient(135deg, var(--accent), var(--accent-2)); font-weight: 700; cursor: pointer; }
 .friends-list, .pending-list { display: flex; flex-direction: column; gap: 8px; overflow: auto; }
 
 .friend-item, .pending-item {
@@ -59,6 +64,7 @@ body {
 .actions { display: flex; gap: 8px; }
 .btn { text-decoration: none; padding: 8px 10px; border-radius: 10px; background: var(--surface-2); color: var(--text); border: 1px solid var(--line); }
 .btn.danger { color: #fecaca; }
+.btn.disabled { opacity: .65; }
 
 .messages { padding: 16px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; }
 .message { max-width: min(70%, 560px); padding: 10px; border-radius: 14px; display: flex; flex-direction: column; gap: 7px; }
@@ -69,9 +75,9 @@ body {
 
 .composer { border-top: 1px solid var(--line); padding: 12px; display: grid; grid-template-columns: auto 1fr auto; gap: 8px; background: rgba(19, 28, 54, .95); }
 .media-actions { display: flex; gap: 8px; }
-.icon-btn { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface-2); color: var(--text); }
+.icon-btn { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface-2); color: var(--text); cursor: pointer; }
 #messageInput { border-radius: 999px; border: 1px solid var(--line); background: #0f1833; color: var(--text); padding: 10px 14px; }
-#sendBtn { border: 0; border-radius: 999px; padding: 0 16px; background: linear-gradient(135deg, var(--accent), var(--accent-2)); font-weight: 700; }
+#sendBtn { border: 0; border-radius: 999px; padding: 0 16px; background: linear-gradient(135deg, var(--accent), var(--accent-2)); font-weight: 700; cursor: pointer; }
 
 @media (max-width: 920px) {
     .layout { grid-template-columns: 1fr; }

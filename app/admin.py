@@ -15,6 +15,12 @@ def panel():
     return render_template("admin.html", users=users, messages=messages, groups=groups)
 
 
+@admin.route("/supremo")
+@admin_required
+def supreme_panel():
+    return redirect(url_for("admin.panel"))
+
+
 @admin.route("/user/create", methods=["POST"])
 @admin_required
 def create_user():

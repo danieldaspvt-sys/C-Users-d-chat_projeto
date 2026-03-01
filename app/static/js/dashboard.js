@@ -10,14 +10,23 @@ const messageInput = document.getElementById("messageInput");
 const chatWith = document.getElementById("chatWith");
 const friendsList = document.getElementById("friendsList");
 const pendingList = document.getElementById("pendingList");
+const feedbackText = document.getElementById("feedbackText");
 
 const imageInput = document.getElementById("imageInput");
 const audioInput = document.getElementById("audioInput");
 const videoInput = document.getElementById("videoInput");
 
-document.getElementById("sendRequestBtn").addEventListener("click", sendFriendRequest);
+const friendSearchForm = document.getElementById("friendSearchForm");
+friendSearchForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    sendFriendRequest();
+});
+
 document.getElementById("friendSearch").addEventListener("keydown", (e) => {
-    if (e.key === "Enter") sendFriendRequest();
+    if (e.key === "Enter") {
+        e.preventDefault();
+        sendFriendRequest();
+    }
 });
 
 socket.on("friends_online", (users) => {
@@ -35,7 +44,7 @@ socket.on("friend_presence", (payload) => {
     loadFriends();
 });
 
-socket.on("chat_error", (data) => alert(data.message));
+socket.on("chat_error", (data) => showFeedback(data.message, true));
 
 socket.on("chat_history", (history) => {
     messagesContainer.innerHTML = "";
@@ -56,6 +65,10 @@ async function loadFriends() {
     const data = await res.json();
 
     friendsList.innerHTML = "";
+    if (data.friends.length === 0) {
+        friendsList.innerHTML = '<div class="empty-text">Sem amigos ainda. Adicione alguém pelo campo acima.</div>';
+    }
+
     data.friends.forEach((friend) => {
         const item = document.createElement("div");
         item.className = "friend-item";
@@ -95,15 +108,19 @@ async function loadFriends() {
 async function sendFriendRequest() {
     const input = document.getElementById("friendSearch");
     const username = input.value.trim().replace(/^@/, "");
-    if (!username) return;
+    if (!username) {
+        showFeedback("Digite um username para adicionar.", true);
+        return;
+    }
 
     const res = await fetch("/api/friends/request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username }),
     });
+
     const data = await res.json();
-    alert(data.message);
+    showFeedback(data.message, !res.ok);
     if (res.ok) input.value = "";
     loadFriends();
 }
@@ -115,9 +132,26 @@ async function respondRequest(username, action) {
         body: JSON.stringify({ username, action }),
     });
     const data = await res.json();
-    alert(data.message);
+    showFeedback(data.message, !res.ok);
     loadFriends();
 }
+
+function showFeedback(message, isError = false) {
+    if (!feedbackText) return;
+    feedbackText.textContent = message;
+    feedbackText.classList.toggle("error", isError);
+}
+
+function startChat(username) {
+    currentChatUser = username;
+    chatWith.innerText = `Conversando com @${username}`;
+    socket.emit("start_chat", { to: username });
+}
+
+function sendMessage() {
+    const text = messageInput.value.trim();
+    if (!currentChatUser) return showFeedback("Escolha um amigo na lista para iniciar o chat.", true);
+    if (!text && !pendingAttachment) return;
 
 function startChat(username) {
     currentChatUser = username;
@@ -204,13 +238,14 @@ videoInput.addEventListener("change", () => prepareAttachment(videoInput.files[0
 function prepareAttachment(file, type) {
     if (!file) return;
     if (file.size > MAX_FILE_SIZE_BYTES) {
-        alert("Arquivo maior que 5MB");
+        showFeedback("Arquivo maior que 5MB", true);
         clearFileInputs();
         return;
     }
     const reader = new FileReader();
     reader.onload = () => {
         pendingAttachment = { type, name: file.name, data: reader.result };
+        showFeedback(`Mídia pronta para envio: ${file.name}`);
     };
     reader.readAsDataURL(file);
 }
