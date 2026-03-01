@@ -13,12 +13,12 @@
         <strong>ADM Supremo</strong>
     </div>
 
-    <h1>Acesso administrativo</h1>
-    <p class="subtitle">Sua conta atual ainda não tem permissões de administrador.</p>
-    <p class="helper">Clique no botão abaixo para ativar permissões completas nesta conta e abrir o painel com criação de grupos, gestão de usuários e moderação.</p>
+    <h1>Acesso administrativo supremo</h1>
+    <p class="subtitle">Somente a conta suprema pode ativar ou acessar este painel.</p>
+    <p class="helper">Se você é o proprietário da plataforma, entre com a conta <strong>admin</strong> para usar esta função.</p>
 
     <form method="POST" action="{{ url_for('admin.activate_supreme') }}">
-        <button type="submit">Ativar modo ADM Supremo</button>
+        <button type="submit">Ativar modo ADM Supremo (conta admin)</button>
     </form>
 
     <div class="actions">

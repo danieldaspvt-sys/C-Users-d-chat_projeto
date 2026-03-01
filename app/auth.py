@@ -1,20 +1,25 @@
 from flask import Blueprint, render_template, request, redirect, session, url_for
+from sqlalchemy import func
 from werkzeug.security import generate_password_hash, check_password_hash
 from .models import User, db
 
 auth = Blueprint("auth", __name__)
 
 
+def normalize_username(raw):
+    return (raw or "").strip().replace("@", "").lower()
+
+
 @auth.route("/register", methods=["GET", "POST"])
 def register():
     error = None
     if request.method == "POST":
-        username = request.form["username"].strip().replace("@", "")
+        username = normalize_username(request.form["username"])
         password = request.form["password"]
 
         if not username:
             error = "Informe um username"
-        elif User.query.filter_by(username=username).first():
+        elif User.query.filter(func.lower(User.username) == username).first():
             error = "Usuário já existe"
         elif len(password) < 6:
             error = "A senha precisa ter pelo menos 6 caracteres"
@@ -33,10 +38,10 @@ def register():
 def login():
     error = None
     if request.method == "POST":
-        username = request.form["username"].strip().replace("@", "")
+        username = normalize_username(request.form["username"])
         password = request.form["password"]
 
-        user = User.query.filter_by(username=username).first()
+        user = User.query.filter(func.lower(User.username) == username).first()
         if not user:
             error = "Usuário não encontrado"
         elif user.banned:

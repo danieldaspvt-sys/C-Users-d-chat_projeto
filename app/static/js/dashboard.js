@@ -73,7 +73,10 @@ async function loadFriends() {
                 </div>
                 <span class="status-dot ${onlineFriends.has(friend.username) ? "online" : ""}"></span>
             `;
-            item.querySelector(".user-meta").onclick = () => startChat(friend.username);
+            item.querySelector(".user-meta").onclick = () => {
+                setActiveSidebarItem(item);
+                startChat(friend.username);
+            };
             friendsList.appendChild(item);
         });
 
@@ -135,7 +138,7 @@ async function loadGroups() {
 
         data.groups.forEach((group) => {
             const row = document.createElement("div");
-            row.className = "friend-item";
+            row.className = "friend-item group-item";
             row.innerHTML = `
                 <div><strong>👥 ${group.name}</strong><br><small>${group.joined ? `${group.role}${group.muted ? ' - silenciado' : ''}` : 'não participante'}</small></div>
                 ${group.joined ? '<span class="empty-text">ok</span>' : '<button class="mini-btn accept">Entrar</button>'}
@@ -203,6 +206,12 @@ function showFeedback(message, isError = false) {
     feedbackText.classList.toggle("error", isError);
 }
 
+
+function setActiveSidebarItem(element) {
+    document.querySelectorAll(".friend-item.active").forEach((el) => el.classList.remove("active"));
+    if (element) element.classList.add("active");
+}
+
 function startChat(username) {
     currentChatUser = username;
     chatWith.innerText = `Conversando com @${username}`;
@@ -213,12 +222,6 @@ function sendMessage() {
     const text = messageInput.value.trim();
     if (!currentChatUser) return showFeedback("Escolha um amigo na lista para iniciar o chat.", true);
     if (!text && !pendingAttachment) return;
-
-    if (payload.message) {
-        const p = document.createElement("p");
-        p.textContent = payload.message;
-        node.appendChild(p);
-    }
 
     if (payload.media) node.appendChild(renderMedia(payload.media));
 
@@ -312,6 +315,84 @@ document.getElementById("shareProfileBtn").onclick = () => {
         media: pendingAttachment,
     });
 };
+
+    messageInput.value = "";
+    pendingAttachment = null;
+    clearFileInputs();
+}
+
+function addMessage(payload, sent) {
+    const node = document.createElement("div");
+    node.className = `message ${sent ? "sent" : "received"}`;
+
+    if (payload.message) {
+        const p = document.createElement("p");
+        p.textContent = payload.message;
+        node.appendChild(p);
+    }
+
+    if (payload.media) node.appendChild(renderMedia(payload.media));
+
+    const meta = document.createElement("small");
+    meta.className = "message-meta";
+    meta.textContent = sent ? "Você" : `@${payload.from}`;
+    node.appendChild(meta);
+
+    messagesContainer.appendChild(node);
+}
+
+function renderMedia(media) {
+    if (media.type === "image") {
+        const i = document.createElement("img");
+        i.className = "media-item";
+        i.src = media.data;
+        return i;
+    }
+    if (media.type === "video") {
+        const v = document.createElement("video");
+        v.className = "media-item";
+        v.controls = true;
+        v.src = media.data;
+        return v;
+    }
+    if (media.type === "audio") {
+        const a = document.createElement("audio");
+        a.className = "media-item";
+        a.controls = true;
+        a.src = media.data;
+        return a;
+    }
+    if (media.type === "profile") {
+        const span = document.createElement("div");
+        span.innerText = `🔗 Perfil compartilhado: @${media.username}`;
+        return span;
+    }
+    const fallback = document.createElement("a");
+    fallback.href = media.data;
+    fallback.textContent = media.name || "Arquivo";
+    return fallback;
+}
+
+function prepareAttachment(file, type) {
+    if (!file) return;
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+        showFeedback("Arquivo maior que 5MB", true);
+        clearFileInputs();
+        return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+        pendingAttachment = { type, name: file.name, data: reader.result };
+        showFeedback(`Mídia pronta para envio: ${file.name}`);
+    };
+    reader.readAsDataURL(file);
+}
+
+function clearFileInputs() {
+    imageInput.value = "";
+    audioInput.value = "";
+    videoInput.value = "";
+}
 
     messageInput.value = "";
     pendingAttachment = null;

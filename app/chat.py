@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from flask import Blueprint, jsonify, render_template, request, session
+from sqlalchemy import func
 from .friendships import (
     get_friends,
     outgoing_requests,
@@ -65,7 +66,7 @@ def respond_request_api():
     action = payload.get("action")
 
     current = User.query.filter_by(username=session["username"]).first_or_404()
-    requester = User.query.filter_by(username=requester_username).first()
+    requester = User.query.filter(func.lower(User.username) == requester_username.lower()).first()
 
     if not requester:
         return jsonify({"ok": False, "message": "Usuário não encontrado"}), 404

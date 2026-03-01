@@ -1,5 +1,12 @@
-from sqlalchemy import and_, or_
+from sqlalchemy import and_, func, or_
 from .models import Friendship, User, db
+
+
+def _find_user_by_username(username):
+    normalized = (username or "").strip().replace("@", "").lower()
+    if not normalized:
+        return None
+    return User.query.filter(func.lower(User.username) == normalized).first()
 
 
 def are_friends(user_a_id, user_b_id):
@@ -47,7 +54,7 @@ def outgoing_requests(user_id):
 
 
 def send_request(requester_id, addressee_username):
-    addressee = User.query.filter_by(username=addressee_username).first()
+    addressee = _find_user_by_username(addressee_username)
     if not addressee or addressee.id == requester_id:
         return False, "Usuário inválido"
 

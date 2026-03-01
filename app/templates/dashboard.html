@@ -47,7 +47,7 @@
             </div>
             <div class="actions">
                 <a class="btn" href="{{ url_for('profile.profile_page') }}">Perfil</a>
-                <a class="btn {% if session.get('role') != 'admin' %}disabled{% endif %}" href="{{ url_for('admin.supreme_panel') }}" title="{% if session.get('role') == 'admin' %}Painel Supremo{% else %}Somente para admin{% endif %}">ADM Supremo</a>
+                {% if session.get('username','')|lower == 'admin' %}<a class="btn" href="{{ url_for('admin.supreme_panel') }}" title="Painel Supremo">ADM Supremo</a>{% else %}<span class="btn disabled" title="Somente para conta suprema">ADM Supremo</span>{% endif %}
                 <a class="btn danger" href="{{ url_for('auth.logout') }}">Sair</a>
             </div>
         </header>

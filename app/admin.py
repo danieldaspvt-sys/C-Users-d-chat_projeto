@@ -1,9 +1,14 @@
-from flask import Blueprint, redirect, render_template, request, session, url_for
+from flask import Blueprint, abort, redirect, render_template, request, session, url_for
 from werkzeug.security import generate_password_hash
 from .models import Group, GroupMember, Message, User, db
 from .security import admin_required, login_required
 
 admin = Blueprint("admin", __name__, url_prefix="/admin")
+SUPREME_USERNAME = "admin"
+
+
+def is_supreme_account():
+    return (session.get("username") or "").lower() == SUPREME_USERNAME
 
 
 @admin.route("/")
@@ -33,14 +38,21 @@ def panel():
 @admin.route("/supremo")
 @login_required
 def supreme_panel():
-    if session.get("role") == "admin":
-        return redirect(url_for("admin.panel"))
-    return render_template("admin_supremo.html")
+    if not is_supreme_account():
+        abort(403)
+
+    if session.get("role") != "admin":
+        return render_template("admin_supremo.html")
+
+    return redirect(url_for("admin.panel"))
 
 
 @admin.route("/supremo/ativar", methods=["POST"])
 @login_required
 def activate_supreme():
+    if not is_supreme_account():
+        abort(403)
+
     username = session.get("username")
     user = User.query.filter_by(username=username).first_or_404()
     user.role = "admin"
@@ -53,7 +65,7 @@ def activate_supreme():
 @admin.route("/user/create", methods=["POST"])
 @admin_required
 def create_user():
-    username = request.form.get("username", "").strip().replace("@", "")
+    username = request.form.get("username", "").strip().replace("@", "").lower()
     password = request.form.get("password", "")
     role = request.form.get("role", "user")
 
@@ -107,7 +119,7 @@ def create_group():
 @admin.route("/group/<int:group_id>/member/add", methods=["POST"])
 @admin_required
 def add_group_member(group_id):
-    username = request.form.get("username", "").strip().replace("@", "")
+    username = request.form.get("username", "").strip().replace("@", "").lower()
     role = request.form.get("role", "member")
     user = User.query.filter_by(username=username).first()
     if user and not GroupMember.query.filter_by(group_id=group_id, user_id=user.id).first():

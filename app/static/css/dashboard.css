@@ -44,6 +44,17 @@ body {
 .friend-item, .pending-item {
     display: flex; align-items: center; justify-content: space-between;
     gap: 8px; padding: 10px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-2);
+    transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+    animation: sideFadeIn .24s ease;
+}
+.friend-item:hover, .pending-item:hover {
+    transform: translateX(3px);
+    border-color: #3a4f83;
+    box-shadow: 0 6px 18px rgba(0,0,0,.2);
+}
+.friend-item.active {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px rgba(94,234,212,.35) inset;
 }
 .user-meta { display: flex; align-items: center; gap: 9px; cursor: pointer; }
 .avatar-sm { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; border: 1px solid var(--line); }
@@ -63,7 +74,8 @@ body {
 .me small { color: var(--muted); display: block; }
 .status-text { color: #9ed8ff; }
 .actions { display: flex; gap: 8px; }
-.btn { text-decoration: none; padding: 8px 10px; border-radius: 10px; background: var(--surface-2); color: var(--text); border: 1px solid var(--line); }
+.btn { text-decoration: none; padding: 8px 10px; border-radius: 10px; background: var(--surface-2); color: var(--text); border: 1px solid var(--line); transition: transform .18s ease, border-color .18s ease; }
+.btn:hover { transform: translateY(-1px); border-color: #3a4f83; }
 .btn.danger { color: #fecaca; }
 .btn.disabled { opacity: .65; }
 
@@ -93,7 +105,9 @@ body {
     color: var(--text);
     cursor: pointer;
     font-size: 14px;
+    transition: transform .16s ease, border-color .16s ease;
 }
+.icon-btn:hover { transform: translateY(-1px); border-color: #3a4f83; }
 #messageInput { border-radius: 999px; border: 1px solid var(--line); background: #0f1833; color: var(--text); padding: 10px 14px; }
 #sendBtn { border: 0; border-radius: 999px; padding: 0 16px; background: linear-gradient(135deg, var(--accent), var(--accent-2)); font-weight: 700; cursor: pointer; height: 36px; }
 
@@ -104,4 +118,10 @@ body {
     .message { max-width: 88%; }
     .composer { grid-template-columns: 1fr; }
     .media-actions { max-width: none; }
+}
+
+
+@keyframes sideFadeIn {
+  from { opacity: 0; transform: translateX(-4px); }
+  to { opacity: 1; transform: translateX(0); }
 }
