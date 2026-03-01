@@ -1,4 +1,4 @@
-from sqlalchemy import or_, and_
+from sqlalchemy import and_, or_
 from .models import Friendship, User, db
 
 
@@ -27,8 +27,7 @@ def get_friends(user_id):
     if not friend_ids:
         return []
 
-    users = User.query.filter(User.id.in_(friend_ids)).order_by(User.username.asc()).all()
-    return users
+    return User.query.filter(User.id.in_(friend_ids)).order_by(User.username.asc()).all()
 
 
 def pending_requests(user_id):
@@ -37,6 +36,14 @@ def pending_requests(user_id):
     if not requester_ids:
         return []
     return User.query.filter(User.id.in_(requester_ids)).order_by(User.username.asc()).all()
+
+
+def outgoing_requests(user_id):
+    requests = Friendship.query.filter_by(requester_id=user_id, status="pending").all()
+    addressee_ids = [item.addressee_id for item in requests]
+    if not addressee_ids:
+        return []
+    return User.query.filter(User.id.in_(addressee_ids)).order_by(User.username.asc()).all()
 
 
 def send_request(requester_id, addressee_username):
@@ -54,14 +61,21 @@ def send_request(requester_id, addressee_username):
     if existing:
         if existing.status == "accepted":
             return False, "Vocês já são amigos"
+
         if existing.status == "pending":
+            if existing.requester_id == addressee.id and existing.addressee_id == requester_id:
+                existing.status = "accepted"
+                db.session.commit()
+                return True, "Amizade confirmada automaticamente!"
             return False, "Solicitação já pendente"
+
         existing.status = "pending"
+        existing.requester_id = requester_id
+        existing.addressee_id = addressee.id
         db.session.commit()
         return True, "Solicitação reenviada"
 
-    friendship = Friendship(requester_id=requester_id, addressee_id=addressee.id)
-    db.session.add(friendship)
+    db.session.add(Friendship(requester_id=requester_id, addressee_id=addressee.id))
     db.session.commit()
     return True, "Solicitação enviada"
 

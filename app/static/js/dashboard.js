@@ -10,6 +10,7 @@ const messageInput = document.getElementById("messageInput");
 const chatWith = document.getElementById("chatWith");
 const friendsList = document.getElementById("friendsList");
 const pendingList = document.getElementById("pendingList");
+const outgoingList = document.getElementById("outgoingList");
 const feedbackText = document.getElementById("feedbackText");
 
 const imageInput = document.getElementById("imageInput");
@@ -85,6 +86,10 @@ async function loadFriends() {
     });
 
     pendingList.innerHTML = "";
+    if (data.pending.length === 0) {
+        pendingList.innerHTML = '<div class="empty-text">Sem solicitações pendentes.</div>';
+    }
+
     data.pending.forEach((pending) => {
         const row = document.createElement("div");
         row.className = "pending-item";
@@ -102,6 +107,24 @@ async function loadFriends() {
         row.querySelector('[data-action="accept"]').onclick = () => respondRequest(pending.username, "accept");
         row.querySelector('[data-action="reject"]').onclick = () => respondRequest(pending.username, "reject");
         pendingList.appendChild(row);
+    });
+
+    outgoingList.innerHTML = "";
+    if ((data.outgoing || []).length === 0) {
+        outgoingList.innerHTML = '<div class="empty-text">Nenhuma solicitação enviada.</div>';
+    }
+
+    (data.outgoing || []).forEach((pending) => {
+        const row = document.createElement("div");
+        row.className = "pending-item";
+        row.innerHTML = `
+            <div class="user-meta">
+                <img class="avatar-sm" src="/static/${pending.profile_image}" alt="avatar">
+                <span>@${pending.username}</span>
+            </div>
+            <div class="empty-text">Aguardando</div>
+        `;
+        outgoingList.appendChild(row);
     });
 }
 
@@ -151,17 +174,6 @@ function startChat(username) {
 function sendMessage() {
     const text = messageInput.value.trim();
     if (!currentChatUser) return showFeedback("Escolha um amigo na lista para iniciar o chat.", true);
-    if (!text && !pendingAttachment) return;
-
-function startChat(username) {
-    currentChatUser = username;
-    chatWith.innerText = `Conversando com @${username}`;
-    socket.emit("start_chat", { to: username });
-}
-
-function sendMessage() {
-    const text = messageInput.value.trim();
-    if (!currentChatUser) return alert("Escolha um amigo primeiro.");
     if (!text && !pendingAttachment) return;
 
     const payload = {

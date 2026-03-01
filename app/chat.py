@@ -1,5 +1,11 @@
 from flask import Blueprint, jsonify, render_template, request, session
-from .friendships import get_friends, pending_requests, respond_request, send_request
+from .friendships import (
+    get_friends,
+    outgoing_requests,
+    pending_requests,
+    respond_request,
+    send_request,
+)
 from .models import User
 from .security import login_required
 
@@ -18,22 +24,21 @@ def friends_api():
     user = User.query.filter_by(username=session["username"]).first_or_404()
     friends = get_friends(user.id)
     pending = pending_requests(user.id)
+    outgoing = outgoing_requests(user.id)
 
     return jsonify(
         {
             "friends": [
-                {
-                    "username": f.username,
-                    "profile_image": f.profile_image,
-                }
+                {"username": f.username, "profile_image": f.profile_image}
                 for f in friends
             ],
             "pending": [
-                {
-                    "username": p.username,
-                    "profile_image": p.profile_image,
-                }
+                {"username": p.username, "profile_image": p.profile_image}
                 for p in pending
+            ],
+            "outgoing": [
+                {"username": o.username, "profile_image": o.profile_image}
+                for o in outgoing
             ],
         }
     )
@@ -43,7 +48,7 @@ def friends_api():
 @login_required
 def send_request_api():
     payload = request.get_json(silent=True) or {}
-    target_username = (payload.get("username") or "").strip()
+    target_username = (payload.get("username") or "").strip().replace("@", "")
 
     user = User.query.filter_by(username=session["username"]).first_or_404()
     ok, message = send_request(user.id, target_username)
@@ -55,7 +60,7 @@ def send_request_api():
 @login_required
 def respond_request_api():
     payload = request.get_json(silent=True) or {}
-    requester_username = (payload.get("username") or "").strip()
+    requester_username = (payload.get("username") or "").strip().replace("@", "")
     action = payload.get("action")
 
     current = User.query.filter_by(username=session["username"]).first_or_404()

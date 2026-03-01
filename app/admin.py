@@ -1,7 +1,7 @@
-from flask import Blueprint, redirect, render_template, request, url_for
+from flask import Blueprint, redirect, render_template, request, session, url_for
 from werkzeug.security import generate_password_hash
 from .models import Group, Message, User, db
-from .security import admin_required
+from .security import admin_required, login_required
 
 admin = Blueprint("admin", __name__, url_prefix="/admin")
 
@@ -16,19 +16,33 @@ def panel():
 
 
 @admin.route("/supremo")
-@admin_required
+@login_required
 def supreme_panel():
+    if session.get("role") == "admin":
+        return redirect(url_for("admin.panel"))
+    return render_template("admin_supremo.html")
+
+
+@admin.route("/supremo/ativar", methods=["POST"])
+@login_required
+def activate_supreme():
+    username = session.get("username")
+    user = User.query.filter_by(username=username).first_or_404()
+    user.role = "admin"
+    user.banned = False
+    db.session.commit()
+    session["role"] = "admin"
     return redirect(url_for("admin.panel"))
 
 
 @admin.route("/user/create", methods=["POST"])
 @admin_required
 def create_user():
-    username = request.form.get("username", "").strip()
+    username = request.form.get("username", "").strip().replace("@", "")
     password = request.form.get("password", "")
     role = request.form.get("role", "user")
 
-    if username and password and not User.query.filter_by(username=username).first():
+    if username and len(password) >= 6 and not User.query.filter_by(username=username).first():
         db.session.add(
             User(
                 username=username,
@@ -65,7 +79,7 @@ def change_password(user_id):
 @admin_required
 def create_group():
     name = request.form.get("name", "").strip()
-    creator = User.query.filter_by(role="admin").first()
+    creator = User.query.filter_by(username=session.get("username")).first()
     if name and not Group.query.filter_by(name=name).first() and creator:
         db.session.add(Group(name=name, created_by=creator.id))
         db.session.commit()
