@@ -1,49 +1,51 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chat Premium</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
 </head>
 <body>
 
 <div class="app">
-
-    <!-- SIDEBAR -->
-    <div class="sidebar">
-        <div class="logo">
-            Chat Premium
-        </div>
-
-        <div class="user-info">
-            @{{ session.username }}
-        </div>
-
-        <div class="users-list" id="usersList">
-            <!-- usuários online aparecem aqui -->
-        </div>
-
+    <aside class="sidebar">
+        <div class="logo">Chat Premium</div>
+        <div class="user-info">@{{ session.username }}</div>
+        <div class="users-list" id="usersList"></div>
         <a href="{{ url_for('auth.logout') }}" class="logout">Sair</a>
-    </div>
+    </aside>
 
-
-    <!-- CHAT AREA -->
-    <div class="chat-area">
-
+    <main class="chat-area">
         <div class="chat-header">
             <span id="chatWith">Selecione um usuário</span>
+            <span class="status" id="chatStatus">Privado e seguro</span>
         </div>
 
         <div class="messages" id="messages"></div>
 
         <div class="chat-input">
-            <input type="text" id="messageInput" placeholder="Digite sua mensagem...">
-            <button onclick="sendMessage()">Enviar</button>
+            <div class="media-actions">
+                <button class="icon-btn" type="button" id="imageBtn" title="Enviar imagem">🖼️</button>
+                <button class="icon-btn" type="button" id="audioBtn" title="Enviar áudio">🎙️</button>
+                <button class="icon-btn" type="button" id="videoBtn" title="Enviar vídeo">🎥</button>
+            </div>
+
+            <input type="file" id="imageInput" accept="image/*" hidden>
+            <input type="file" id="audioInput" accept="audio/*" hidden>
+            <input type="file" id="videoInput" accept="video/*" hidden>
+
+            <div class="input-wrap">
+                <input type="text" id="messageInput" placeholder="Digite sua mensagem...">
+                <button id="sendBtn" onclick="sendMessage()">Enviar</button>
+            </div>
         </div>
-
-    </div>
-
+    </main>
 </div>
 
+<script>
+    window.currentUser = {{ session.username|tojson }};
+</script>
 <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
 <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 
