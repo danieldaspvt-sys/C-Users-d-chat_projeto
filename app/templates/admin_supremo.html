@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ADM Supremo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+</head>
+<body>
+<main class="auth-card">
+    <div class="auth-brand">
+        <div class="logo">CP</div>
+        <strong>ADM Supremo</strong>
+    </div>
+
+    <h1>Acesso administrativo</h1>
+    <p class="subtitle">Sua conta atual ainda não tem permissões de administrador.</p>
+    <p class="helper">Clique no botão abaixo para ativar permissões completas nesta conta e abrir o painel com criação de grupos, gestão de usuários e moderação.</p>
+
+    <form method="POST" action="{{ url_for('admin.activate_supreme') }}">
+        <button type="submit">Ativar modo ADM Supremo</button>
+    </form>
+
+    <div class="actions">
+        <a href="{{ url_for('chat.dashboard') }}">Voltar ao chat</a>
+    </div>
+</main>
+</body>
+</html>
