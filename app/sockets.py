@@ -17,7 +17,8 @@ def handle_connect():
         return
 
     online_users.add(username)
-    emit("online_users", list(online_users), broadcast=True)
+    join_room(username)
+    emit("online_users", sorted(list(online_users)), broadcast=True)
 
 
 @socketio.on("disconnect")
@@ -27,13 +28,13 @@ def handle_disconnect():
         return
 
     online_users.discard(username)
-    emit("online_users", list(online_users), broadcast=True)
+    emit("online_users", sorted(list(online_users)), broadcast=True)
 
 
 @socketio.on("start_chat")
 def start_chat(data):
     current_user = session.get("username")
-    target_user = data.get("to")
+    target_user = data.get("to") if data else None
 
     if not current_user or not target_user:
         return
@@ -48,20 +49,26 @@ def start_chat(data):
 @socketio.on("private_message")
 def handle_private_message(data):
     sender = session.get("username")
-    receiver = data.get("to")
-    message = data.get("message")
+    receiver = data.get("to") if data else None
+    message = (data.get("message") or "").strip() if data else ""
+    media = data.get("media") if data else None
 
-    if not sender or not receiver or not message:
+    if not sender or not receiver or (not message and not media):
         return
 
     room = get_room(sender, receiver)
-
     payload = {
         "from": sender,
         "to": receiver,
-        "message": message
+        "message": message,
+        "media": media,
     }
 
-    private_messages.setdefault(room, []).append(payload)
+    history = private_messages.setdefault(room, [])
+    history.append(payload)
+
+    if len(history) > 100:
+        del history[:-100]
 
     emit("private_message", payload, room=room)
+    emit("private_message", payload, room=receiver)
