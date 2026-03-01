@@ -130,10 +130,6 @@ function sendMessage() {
     if (!currentChatUser) return alert("Escolha um amigo primeiro.");
     if (!text && !pendingAttachment) return;
 
-    if (!message && !pendingAttachment) {
-        return;
-    }
-
     const payload = {
         to: currentChatUser,
         message: text,
