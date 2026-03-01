@@ -214,11 +214,104 @@ function sendMessage() {
     if (!currentChatUser) return showFeedback("Escolha um amigo na lista para iniciar o chat.", true);
     if (!text && !pendingAttachment) return;
 
+    if (payload.message) {
+        const p = document.createElement("p");
+        p.textContent = payload.message;
+        node.appendChild(p);
+    }
+
+    if (payload.media) node.appendChild(renderMedia(payload.media));
+
+    const meta = document.createElement("small");
+    meta.className = "message-meta";
+    meta.textContent = sent ? "Você" : `@${payload.from}`;
+    node.appendChild(meta);
+
+    messagesContainer.appendChild(node);
+}
+
+function renderMedia(media) {
+    if (media.type === "image") {
+        const i = document.createElement("img");
+        i.className = "media-item";
+        i.src = media.data;
+        return i;
+    }
+    if (media.type === "video") {
+        const v = document.createElement("video");
+        v.className = "media-item";
+        v.controls = true;
+        v.src = media.data;
+        return v;
+    }
+    if (media.type === "audio") {
+        const a = document.createElement("audio");
+        a.className = "media-item";
+        a.controls = true;
+        a.src = media.data;
+        return a;
+    }
+    if (media.type === "profile") {
+        const span = document.createElement("div");
+        span.innerText = `🔗 Perfil compartilhado: @${media.username}`;
+        return span;
+    }
+    const fallback = document.createElement("a");
+    fallback.href = media.data;
+    fallback.textContent = media.name || "Arquivo";
+    return fallback;
+}
+
+function prepareAttachment(file, type) {
+    if (!file) return;
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+        showFeedback("Arquivo maior que 5MB", true);
+        clearFileInputs();
+        return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+        pendingAttachment = { type, name: file.name, data: reader.result };
+        showFeedback(`Mídia pronta para envio: ${file.name}`);
+    };
+    reader.readAsDataURL(file);
+}
+
+function clearFileInputs() {
+    imageInput.value = "";
+    audioInput.value = "";
+    videoInput.value = "";
+}
+
+function scrollToBottom() {
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
+function triggerNotification() {
+    if ("vibrate" in navigator) navigator.vibrate([100, 60, 100]);
+}
+
+document.getElementById("sendBtn").addEventListener("click", sendMessage);
+messageInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") sendMessage();
+});
+
+document.getElementById("imageBtn").onclick = () => imageInput.click();
+document.getElementById("audioBtn").onclick = () => audioInput.click();
+document.getElementById("videoBtn").onclick = () => videoInput.click();
+
+imageInput.addEventListener("change", () => prepareAttachment(imageInput.files[0], "image"));
+audioInput.addEventListener("change", () => prepareAttachment(audioInput.files[0], "audio"));
+videoInput.addEventListener("change", () => prepareAttachment(videoInput.files[0], "video"));
+
+document.getElementById("shareProfileBtn").onclick = () => {
+    if (!currentChatUser) return showFeedback("Escolha um amigo para compartilhar perfil.", true);
     socket.emit("private_message", {
         to: currentChatUser,
         message: text,
         media: pendingAttachment,
     });
+};
 
     messageInput.value = "";
     pendingAttachment = null;
