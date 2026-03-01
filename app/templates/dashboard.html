@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chat Premium</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+</head>
+<body>
+
+<div class="app">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+        <div class="logo">
+            Chat Premium
+        </div>
+
+        <div class="user-info">
+            @{{ session.username }}
+        </div>
+
+        <div class="users-list" id="usersList">
+            <!-- usuários online aparecem aqui -->
+        </div>
+
+        <a href="{{ url_for('auth.logout') }}" class="logout">Sair</a>
+    </div>
+
+
+    <!-- CHAT AREA -->
+    <div class="chat-area">
+
+        <div class="chat-header">
+            <span id="chatWith">Selecione um usuário</span>
+        </div>
+
+        <div class="messages" id="messages"></div>
+
+        <div class="chat-input">
+            <input type="text" id="messageInput" placeholder="Digite sua mensagem...">
+            <button onclick="sendMessage()">Enviar</button>
+        </div>
+
+    </div>
+
+</div>
+
+<script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+
+</body>
+</html>

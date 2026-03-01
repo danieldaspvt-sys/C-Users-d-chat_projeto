@@ -1,0 +1,208 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chat Online</title>
+
+<style>
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: Arial, sans-serif;
+}
+
+/* Papel de parede com textura */
+body {
+    display: flex;
+    flex-direction: column;
+    background:
+        radial-gradient(circle at 20% 20%, rgba(255,255,255,0.03) 1px, transparent 1px),
+        radial-gradient(circle at 80% 80%, rgba(255,255,255,0.03) 1px, transparent 1px),
+        #0f0f0f;
+    background-size: 30px 30px;
+}
+
+header {
+    background: #111;
+    color: white;
+    padding: 15px;
+    text-align: center;
+    font-weight: bold;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+}
+
+#onlineUsers {
+    background: #1a1a1a;
+    color: #00ff88;
+    padding: 6px;
+    font-size: 13px;
+    text-align: center;
+}
+
+#messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Bolhas */
+.message {
+    padding: 10px 15px;
+    border-radius: 18px;
+    margin-bottom: 10px;
+    max-width: 70%;
+    word-wrap: break-word;
+    animation: fadeIn 0.2s ease-in-out;
+}
+
+.me {
+    align-self: flex-end;
+    background: #25d366;
+    color: black;
+}
+
+.other {
+    align-self: flex-start;
+    background: #222;
+    color: white;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Área inferior */
+.input-area {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    background: #111;
+    gap: 8px;
+}
+
+#msg {
+    flex: 1;
+    padding: 12px;
+    border-radius: 25px;
+    border: none;
+    font-size: 15px;
+    outline: none;
+}
+
+.action-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    background: #222;
+    color: white;
+    font-size: 18px;
+    cursor: pointer;
+}
+
+.send-btn {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    border: none;
+    background: #25d366;
+    color: white;
+    font-size: 18px;
+    cursor: pointer;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+Chat Online<br>
+Você está logado como: {{ username }}
+</header>
+
+<div id="onlineUsers">
+Usuários online: <span id="usersList">Carregando...</span>
+</div>
+
+<div id="messages">
+{% for msg in messages %}
+<div class="message {% if username in msg %}me{% else %}other{% endif %}">
+{{ msg }}
+</div>
+{% endfor %}
+</div>
+
+<div class="input-area">
+
+<input type="file" id="imageInput" accept="image/*" hidden>
+<input type="file" id="audioInput" accept="audio/*" hidden>
+<input type="file" id="videoInput" accept="video/*" hidden>
+
+<button class="action-btn" onclick="document.getElementById('imageInput').click()">📷</button>
+<button class="action-btn" onclick="document.getElementById('audioInput').click()">🎙</button>
+<button class="action-btn" onclick="document.getElementById('videoInput').click()">🎥</button>
+
+<input id="msg" autocomplete="off" placeholder="Digite sua mensagem...">
+
+<button class="send-btn" onclick="sendMsg()">➤</button>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+
+<script>
+var socket = io();
+var username = "{{ username }}";
+
+function sendMsg() {
+    var input = document.getElementById("msg");
+    var msg = input.value.trim();
+    if (msg === "") return;
+
+    socket.send(msg);
+    input.value = "";
+}
+
+socket.on("message", function(msg) {
+    var messagesDiv = document.getElementById("messages");
+
+    var div = document.createElement("div");
+    div.classList.add("message");
+
+    if (msg.startsWith(username + ":")) {
+        div.classList.add("me");
+    } else {
+        div.classList.add("other");
+    }
+
+    div.innerText = msg;
+    messagesDiv.appendChild(div);
+
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+});
+
+socket.on("online_users", function(users) {
+    document.getElementById("usersList").innerText = users.join(", ");
+});
+
+document.getElementById("msg").addEventListener("keypress", function(e) {
+    if (e.key === "Enter") {
+        sendMsg();
+    }
+});
+
+window.onload = function() {
+    var messagesDiv = document.getElementById("messages");
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+};
+</script>
+
+<script src="{{ url_for('static', filename='js/renderMedia.js') }}"></script>
+<script src="{{ url_for('static', filename='js/media.js') }}"></script>
+
+</body>
+</html>
