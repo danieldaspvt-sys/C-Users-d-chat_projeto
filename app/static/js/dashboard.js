@@ -153,7 +153,18 @@ function sendMessage() {
     if (!currentChatUser) return showFeedback("Escolha um amigo na lista para iniciar o chat.", true);
     if (!text && !pendingAttachment) return;
 
-    socket.emit("private_message", {
+function startChat(username) {
+    currentChatUser = username;
+    chatWith.innerText = `Conversando com @${username}`;
+    socket.emit("start_chat", { to: username });
+}
+
+function sendMessage() {
+    const text = messageInput.value.trim();
+    if (!currentChatUser) return alert("Escolha um amigo primeiro.");
+    if (!text && !pendingAttachment) return;
+
+    const payload = {
         to: currentChatUser,
         message: text,
         media: pendingAttachment,
