@@ -56,6 +56,8 @@ def send_request(requester_id, addressee_username):
             return False, "Vocês já são amigos"
         if existing.status == "pending":
             return False, "Solicitação já pendente"
+        existing.requester_id = requester_id
+        existing.addressee_id = addressee.id
         existing.status = "pending"
         db.session.commit()
         return True, "Solicitação reenviada"

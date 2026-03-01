@@ -1,5 +1,6 @@
 from flask import Flask
 from flask_socketio import SocketIO
+import os
 from sqlalchemy import text
 from werkzeug.security import generate_password_hash
 from .models import User, db
@@ -78,10 +79,14 @@ def seed_admin():
         if not admin.profile_image:
             admin.profile_image = "uploads/default-avatar.svg"
     else:
+        admin_password = os.environ.get("ADMIN_PASSWORD")
+        if not admin_password:
+            return
+
         db.session.add(
             User(
                 username="admin",
-                password=generate_password_hash("admin123"),
+                password=generate_password_hash(admin_password),
                 role="admin",
                 profile_image="uploads/default-avatar.svg",
             )
